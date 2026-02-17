@@ -1,0 +1,27 @@
+graph TD
+    App["App.tsx"]
+    Layout["Layout コンポーネント"]
+    AppBar["AppBar（固定ヘッダー）\nposition=fixed"]
+    Toolbar1["Toolbar"]
+    MenuBtn["IconButton\n☰ メニューアイコン"]
+    Title["Typography\nユーザー管理システム"]
+    Drawer["Drawer（サイドナビ）\nvariant=temporary\nwidth=240px"]
+    Toolbar2["Toolbar（スペーサー）"]
+    List["List"]
+    Item1["ListItemButton\n👥 ユーザー一覧 → /"]
+    Item2["ListItemButton\n👤 ユーザー登録 → /users/new"]
+    Main["Box（main コンテンツ）"]
+    Children["children（各ページ）\nSwitch / Route"]
+
+    App --> Layout
+    Layout --> AppBar
+    Layout --> Drawer
+    Layout --> Main
+    AppBar --> Toolbar1
+    Toolbar1 --> MenuBtn
+    Toolbar1 --> Title
+    Drawer --> Toolbar2
+    Drawer --> List
+    List --> Item1
+    List --> Item2
+    Main --> Children
