@@ -1,0 +1,44 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "田中太郎",
+      "email": "tanaka@example.com",
+      "role": "admin",
+      "department": "開発部",
+      "createdAt": "2025-01-15T09:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "佐藤花子",
+      "email": "sato@example.com",
+      "role": "editor",
+      "department": "マーケティング部",
+      "createdAt": "2025-02-20T10:30:00Z"
+    },
+    {
+      "id": 3,
+      "name": "鈴木一郎",
+      "email": "suzuki@example.com",
+      "role": "viewer",
+      "department": "営業部",
+      "createdAt": "2025-03-10T14:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "高橋美咲",
+      "email": "takahashi@example.com",
+      "role": "editor",
+      "department": "開発部",
+      "createdAt": "2025-04-05T11:15:00Z"
+    },
+    {
+      "id": 5,
+      "name": "伊藤健太",
+      "email": "ito@example.com",
+      "role": "viewer",
+      "department": "人事部",
+      "createdAt": "2025-05-12T08:45:00Z"
+    }
+  ]
+}
