@@ -1,7 +1,7 @@
 import { Route, Switch } from "react-router-dom";
 import Layout from "./components/Layout";
+import UserListPage from "./features/users/pages/UserListPage";
 
-const UserListPage = () => <h2>ユーザー一覧ページ</h2>;
 const UserFormPage = () => <h2>ユーザー登録ページ</h2>;
 
 function App() {
