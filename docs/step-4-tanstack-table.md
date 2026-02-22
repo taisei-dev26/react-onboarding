@@ -115,8 +115,7 @@ TanStack Tableを使ってユーザー一覧テーブルを作成する。ソー
 **`src/features/users/components/UserTable.tsx`** を新規作成：
 
 ```tsx
-import { useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -126,6 +125,7 @@ import {
   flexRender,
   createColumnHelper,
   SortingState,
+  RowData,
 } from '@tanstack/react-table';
 import {
   Table,
@@ -146,6 +146,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { User, Role } from '../types';
 
+// TanStack Table の meta を型付け
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData extends RowData> {
+    onEdit?: (id: number) => void;
+    onDelete?: (id: number) => void;
+  }
+}
+
 const roleLabels: Record<Role, { label: string; color: 'error' | 'warning' | 'info' }> = {
   admin: { label: '管理者', color: 'error' },
   editor: { label: '編集者', color: 'warning' },
@@ -154,72 +162,72 @@ const roleLabels: Record<Role, { label: string; color: 'error' | 'warning' | 'in
 
 const columnHelper = createColumnHelper<User>();
 
+// カラム定義はコンポーネント外に配置（安定した参照）
+const columns = [
+  columnHelper.accessor('name', {
+    header: '名前',
+    // cell は省略可能（デフォルトで getValue() が呼ばれる）
+  }),
+  columnHelper.accessor('email', {
+    header: 'メール',
+  }),
+  columnHelper.accessor('role', {
+    header: '権限',
+    cell: (info) => {
+      const role = info.getValue();
+      return (
+        <Chip
+          label={roleLabels[role].label}
+          color={roleLabels[role].color}
+          size="small"
+        />
+      );
+    },
+  }),
+  columnHelper.accessor('department', {
+    header: '部署',
+  }),
+  columnHelper.display({
+    id: 'actions',
+    header: '操作',
+    cell: ({ row, table }) => {
+      // meta からコールバックを取得
+      const { onEdit, onDelete } = table.options.meta ?? {};
+      return (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => onEdit?.(row.original.id)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => onDelete?.(row.original.id)}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      );
+    },
+  }),
+];
+
 type UserTableProps = {
   users: User[];
   onDelete: (id: number) => void;
+  onEdit: (id: number) => void;
 };
 
-const UserTable = ({ users, onDelete }: UserTableProps) => {
-  const history = useHistory();
+const UserTable = ({ users, onDelete, onEdit }: UserTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor('name', {
-        header: '名前',
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.accessor('email', {
-        header: 'メール',
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.accessor('role', {
-        header: '権限',
-        cell: (info) => {
-          const role = info.getValue();
-          return (
-            <Chip
-              label={roleLabels[role].label}
-              color={roleLabels[role].color}
-              size="small"
-            />
-          );
-        },
-      }),
-      columnHelper.accessor('department', {
-        header: '部署',
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.display({
-        id: 'actions',
-        header: '操作',
-        cell: (info) => (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <IconButton
-              size="small"
-              color="primary"
-              onClick={() => history.push(`/users/${info.row.original.id}/edit`)}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => onDelete(info.row.original.id)}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        ),
-      }),
-    ],
-    [history, onDelete]
-  );
-
   const table = useReactTable({
     data: users,
-    columns,
+    columns,  // 外部定義を直接参照（useMemo 不要）
     state: {
       sorting,
       globalFilter,
@@ -230,6 +238,11 @@ const UserTable = ({ users, onDelete }: UserTableProps) => {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    // meta でコールバックを渡す
+    meta: {
+      onEdit,
+      onDelete,
+    },
     initialState: {
       pagination: {
         pageSize: 5,
@@ -304,28 +317,66 @@ export default UserTable;
 
 #### コード解説（import部分）
 
-| 行 | コード | 説明 |
-|----|--------|------|
-| 4 | `useReactTable` | TanStack Tableのメインフック |
-| 5 | `getCoreRowModel` | 基本の行モデル（必須） |
-| 6 | `getSortedRowModel` | ソート機能を有効化 |
-| 7 | `getFilteredRowModel` | フィルタ機能を有効化 |
-| 8 | `getPaginationRowModel` | ページネーション機能を有効化 |
-| 9 | `flexRender` | セル内容をレンダリングするヘルパー |
-| 10 | `createColumnHelper` | 型安全なカラム定義ヘルパー |
-| 11 | `SortingState` | ソート状態の型 |
+| コード | 説明 |
+|--------|------|
+| `useReactTable` | TanStack Tableのメインフック |
+| `getCoreRowModel` | 基本の行モデル（必須） |
+| `getSortedRowModel` | ソート機能を有効化 |
+| `getFilteredRowModel` | フィルタ機能を有効化 |
+| `getPaginationRowModel` | ページネーション機能を有効化 |
+| `flexRender` | セル内容をレンダリングするヘルパー |
+| `createColumnHelper` | 型安全なカラム定義ヘルパー |
+| `SortingState` | ソート状態の型 |
+| `RowData` | meta の型定義に必要 |
+
+#### コード解説（meta 型定義）
+
+```tsx
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData extends RowData> {
+    onEdit?: (id: number) => void;
+    onDelete?: (id: number) => void;
+  }
+}
+```
+
+TanStack Table の `meta` はデフォルトで `unknown` 型。TypeScript の Module Augmentation を使って型を拡張することで、`table.options.meta` に型安全にアクセスできる。
 
 #### コード解説（カラム定義）
 
-| 行 | コード | 説明 |
-|----|--------|------|
-| 38 | `createColumnHelper<User>()` | User型に基づくカラムヘルパーを作成 |
-| 50-53 | `columnHelper.accessor('name', {...})` | データフィールドに紐づくカラム |
-| 51 | `header: '名前'` | ヘッダーのラベル |
-| 52 | `cell: (info) => info.getValue()` | セルの表示内容 |
-| 59-70 | `accessor('role', {...})` | カスタムセル描画の例 |
-| 71-91 | `columnHelper.display({...})` | データに紐づかない表示専用カラム |
-| 72 | `id: 'actions'` | display列には明示的なIDが必要 |
+| コード | 説明 |
+|--------|------|
+| `createColumnHelper<User>()` | User型に基づくカラムヘルパーを作成 |
+| `columnHelper.accessor('name', {...})` | データフィールドに紐づくカラム |
+| `header: '名前'` | ヘッダーのラベル |
+| `cell` 省略 | デフォルトで `getValue()` が呼ばれる |
+| `accessor('role', {...})` | カスタムセル描画の例 |
+| `columnHelper.display({...})` | データに紐づかない表示専用カラム |
+| `id: 'actions'` | display列には明示的なIDが必要 |
+| `table.options.meta` | テーブルに渡した meta オブジェクトを取得 |
+
+#### なぜカラム定義をコンポーネント外に置くのか
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ❌ コンポーネント内で useMemo                                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ const columns = useMemo(() => [...], [history]);    │    │
+│  └─────────────────────────────────────────────────────┘    │
+│  → history が変わるたびにカラム配列が再生成される              │
+│  → テーブル全体が不要に再レンダリングされる可能性              │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  ✅ コンポーネント外 + meta パターン                          │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ const columns = [...];  // モジュールレベル           │    │
+│  │ meta: { onEdit, onDelete }  // コールバックは meta へ  │    │
+│  └─────────────────────────────────────────────────────┘    │
+│  → カラム定義は常に同じ参照（安定）                          │
+│  → コールバックの変化はカラム再生成を引き起こさない            │
+└─────────────────────────────────────────────────────────────┘
+```
 
 #### `accessor` vs `display`
 
@@ -336,15 +387,16 @@ export default UserTable;
 
 #### コード解説（テーブル設定）
 
-| 行 | コード | 説明 |
-|----|--------|------|
-| 94-112 | `useReactTable({...})` | テーブルインスタンスを作成 |
-| 95 | `data: users` | テーブルのデータソース |
-| 96 | `columns` | カラム定義 |
-| 97-100 | `state: {...}` | 管理する状態（ソート、フィルタ） |
-| 101-102 | `onXxxChange` | 状態変更時のコールバック |
-| 103-106 | `getXxxRowModel()` | 各機能のロジックを追加 |
-| 107-111 | `initialState` | 初期状態（ページサイズなど） |
+| コード | 説明 |
+|--------|------|
+| `useReactTable({...})` | テーブルインスタンスを作成 |
+| `data: users` | テーブルのデータソース |
+| `columns` | カラム定義（外部定義を直接参照） |
+| `state: {...}` | 管理する状態（ソート、フィルタ） |
+| `onXxxChange` | 状態変更時のコールバック |
+| `getXxxRowModel()` | 各機能のロジックを追加 |
+| `meta: {...}` | カラムから参照するコールバック等を渡す |
+| `initialState` | 初期状態（ページサイズなど） |
 
 #### コード解説（レンダリング部分）
 
@@ -403,6 +455,10 @@ const UserListPage = () => {
   const { data: users, isLoading, isError, error } = useUsers();
   const deleteUserMutation = useDeleteUser();
 
+  const handleEdit = (id: number) => {
+    history.push(`/users/${id}/edit`);
+  };
+
   const handleDelete = (id: number) => {
     if (window.confirm('このユーザーを削除しますか？')) {
       deleteUserMutation.mutate(id);
@@ -438,7 +494,7 @@ const UserListPage = () => {
         </Button>
       </Box>
 
-      <UserTable users={users ?? []} onDelete={handleDelete} />
+      <UserTable users={users ?? []} onEdit={handleEdit} onDelete={handleDelete} />
     </Box>
   );
 };
@@ -451,9 +507,10 @@ export default UserListPage;
 | 行 | コード | 説明 |
 |----|--------|------|
 | 10 | `useDeleteUser()` | 削除用のmutationフック |
-| 12-16 | `handleDelete` | 削除確認と実行 |
-| 13 | `window.confirm` | ブラウザ標準の確認ダイアログ（Step 7でMUIに差し替え） |
-| 14 | `mutate(id)` | ミューテーション実行 |
+| 12-14 | `handleEdit` | 編集ページへの遷移（遷移ロジックをページ層に集約） |
+| 16-20 | `handleDelete` | 削除確認と実行 |
+| 17 | `window.confirm` | ブラウザ標準の確認ダイアログ（Step 7でMUIに差し替え） |
+| 18 | `mutate(id)` | ミューテーション実行 |
 | 46 | `users ?? []` | `users`が`undefined`の場合は空配列を渡す |
 
 ---
@@ -473,14 +530,18 @@ export default UserListPage;
 
 ## よくある質問・トラブルシューティング
 
-### Q: TypeScriptエラー「Cannot read properties of undefined」
+### Q: TypeScriptエラー「Property 'onEdit' does not exist on type 'TableMeta'」
 
-**A:** `columns` の `useMemo` 依存配列に必要な値が含まれているか確認：
+**A:** `meta` の型定義が不足している。ファイル内に Module Augmentation を追加：
 ```ts
-const columns = useMemo(
-  () => [...],
-  [history, onDelete]  // ← 依存配列
-);
+import { RowData } from '@tanstack/react-table';
+
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData extends RowData> {
+    onEdit?: (id: number) => void;
+    onDelete?: (id: number) => void;
+  }
+}
 ```
 
 ### Q: ソートアイコンが表示されない
@@ -546,14 +607,20 @@ columnHelper.accessor('role', {
    - `createColumnHelper<T>()` で型安全なヘルパーを作成
    - `accessor` → データフィールドに紐づく（ソート・フィルタ可能）
    - `display` → 表示専用（操作ボタンなど）
+   - カラム定義はコンポーネント外に置く（パフォーマンス向上）
 
-3. **ソート・フィルタ・ページネーション**
+3. **meta パターン**
+   - `meta` でコールバックをテーブルに渡す
+   - カラム内で `table.options.meta` から取得
+   - Module Augmentation で型安全に
+
+4. **ソート・フィルタ・ページネーション**
    - `getSortedRowModel()` でソート有効化
    - `getFilteredRowModel()` + `globalFilter` でフィルタ
    - `getPaginationRowModel()` でページネーション
    - 状態は `useState` で管理し、テーブルに渡す
 
-4. **MUIとの統合**
+5. **MUIとの統合**
    - TanStack Table のデータを MUI の Table コンポーネントで描画
    - `TableSortLabel` でソートUIを実現
    - `TablePagination` でページネーションUIを実現
