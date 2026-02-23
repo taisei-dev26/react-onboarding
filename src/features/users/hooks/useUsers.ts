@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, fetchUsers, updateUser } from "../../../api/users";
+import { createUser, fetchUsers, updateUser, deleteUser } from "../../../api/users";
 import { UserFormData } from "../types";
 
 // クエリー定数
@@ -47,13 +47,13 @@ export const useUpdateUser = () => {
 }
 
 // ユーザー削除
-// export const useDeleteUser = () => {
-//     const queryClient = useQueryClient();
+export const useDeleteUser = () => {
+    const queryClient = useQueryClient();
 
-//     return useMutation({
-//         mutationFn: (id: number) => deleteUser(id),
-//         onSuccess: () => {
-//             queryClient.invalidateQueries({ queryKey: USERS_KEY })
-//         }
-//     })
-// }
+    return useMutation({
+        mutationFn: (id: number) => deleteUser(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: USERS_KEY })
+        }
+    })
+}
