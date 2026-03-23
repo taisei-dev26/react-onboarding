@@ -4,20 +4,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-React + TypeScript のオンボーディングプロジェクト。ユーザー管理CRUDアプリケーションを段階的に構築する学習用リポジトリ。
+React + TypeScript (Frontend) + FastAPI (Backend) のオンボーディングプロジェクト。
+ユーザー管理CRUDアプリケーションを段階的に構築する学習用リポジトリ。
 実装ガイドは `docs/implementation-guide.md` に記載（7ステップの段階的実装）。
 
-## Commands
+## Project Structure
+
+```
+react-onboarding/
+├── frontend/     # React + TypeScript アプリケーション
+├── api/          # FastAPI バックエンド
+└── docs/         # ドキュメント
+```
+
+## Frontend Commands
 
 ```bash
+cd frontend
 npm start              # 開発サーバー起動 (port 3000)
 npm run build          # プロダクションビルド
 npm test               # テスト実行 (watch mode)
 npm test -- --coverage # カバレッジ付きテスト
-npx json-server --watch db.json --port 3001  # モックAPIサーバー起動
+npm run server         # モックAPIサーバー起動 (port 3001)
 ```
 
-## Tech Stack & Version Constraints
+## Backend Commands
+
+```bash
+cd api
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000  # 開発サーバー起動
+```
+
+API ドキュメント: http://localhost:8000/docs (Swagger UI)
+
+## Frontend Tech Stack & Version Constraints
 
 - **React 17** with new JSX transform (React importは不要)
 - **TypeScript 4.9** strict mode有効
@@ -28,15 +51,23 @@ npx json-server --watch db.json --port 3001  # モックAPIサーバー起動
 - **React Hook Form v7** + Yup (フォーム + バリデーション)
 - **TanStack Table v8** (ヘッドレステーブル: ソート、フィルタ、ページネーション)
 - **Axios** (HTTPクライアント、カスタムインスタンス)
-- **json-server 0.17** (モックREST API, port 3001)
+- **json-server 0.17** (モックREST API, port 3001) ※オプション
 - **Testing Library** + Jest (react-scripts経由)
 
-## Architecture
+## Backend Tech Stack
+
+- **FastAPI** - モダンなWebフレームワーク
+- **Pydantic** - データバリデーション
+- **SQLAlchemy** - ORM
+- **Uvicorn** - ASGI サーバー
+- **Python 3.9+**
+
+## Frontend Architecture
 
 Feature-based ディレクトリ構成:
 
 ```
-src/
+frontend/src/
 ├── api/              # Axiosインスタンス, API関数
 ├── features/
 │   └── users/
@@ -56,12 +87,33 @@ src/
 - グローバルUI状態 → Zustand (通知、サイドバー開閉)
 - ローカル状態 → React hooks (コンポーネント内)
 
-## Mock API
+## Backend Architecture
 
-json-serverが `db.json` をもとにREST APIを提供する（port 3001）。
+```
+api/
+├── main.py           # エントリーポイント、CORS設定
+├── models/           # SQLAlchemy モデル
+├── schemas/          # Pydantic スキーマ (リクエスト/レスポンス)
+├── routers/          # API ルーター (エンドポイント定義)
+├── services/         # ビジネスロジック
+├── database.py       # DB接続設定
+└── requirements.txt  # Python依存パッケージ
+```
 
+## API Endpoints
+
+### Users API (FastAPI)
+- `GET /api/users` - ユーザー一覧取得
+- `POST /api/users` - ユーザー作成
+- `GET /api/users/{id}` - ユーザー詳細取得
+- `PUT /api/users/{id}` - ユーザー更新
+- `DELETE /api/users/{id}` - ユーザー削除
+
+User schema:
 ```
 User: { id, name, email, role: 'admin'|'editor'|'viewer', department, createdAt }
 ```
 
-エンドポイント: `GET/POST /users`, `GET/PUT/DELETE /users/:id`
+### Mock API (json-server - オプション)
+json-serverが `frontend/db.json` をもとにREST APIを提供する（port 3001）。
+FastAPI 実装前の開発用。
