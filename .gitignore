@@ -1,15 +1,49 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Frontend dependencies
+/frontend/node_modules
+/frontend/.pnp
+/frontend/.pnp.js
 
-# testing
-/coverage
+# Frontend testing
+/frontend/coverage
 
-# production
-/build
+# Frontend production
+/frontend/build
+
+# Backend Python
+/api/__pycache__/
+/api/*.py[cod]
+/api/*$py.class
+/api/*.so
+/api/.Python
+/api/env/
+/api/venv/
+/api/ENV/
+/api/build/
+/api/develop-eggs/
+/api/dist/
+/api/downloads/
+/api/eggs/
+/api/.eggs/
+/api/lib/
+/api/lib64/
+/api/parts/
+/api/sdist/
+/api/var/
+/api/wheels/
+/api/*.egg-info/
+/api/.installed.cfg
+/api/*.egg
+
+# Backend environment
+/api/.env
+/api/.venv
+
+# Backend database
+/api/*.db
+/api/*.sqlite
+/api/*.sqlite3
 
 # misc
 .DS_Store
@@ -21,3 +55,15 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
