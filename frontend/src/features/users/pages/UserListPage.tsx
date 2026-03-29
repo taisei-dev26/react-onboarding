@@ -1,5 +1,5 @@
 import { Alert, Box, CircularProgress, Typography } from "@mui/material"
-import { useUsers, useDeleteUser } from "../hooks/useUsers"
+import { useUsers, useDeleteUser } from "../hooks"
 import UserTable from "../components/UserTable";
 import { useHistory } from "react-router-dom"
 import { Button } from "@mui/material"

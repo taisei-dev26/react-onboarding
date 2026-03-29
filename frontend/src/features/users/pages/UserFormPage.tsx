@@ -1,6 +1,6 @@
 import { Alert, Box, CircularProgress, Container, Paper, Typography } from "@mui/material";
 import { useHistory, useParams } from "react-router-dom"
-import { useCreateUser, useUpdateUser, useUser } from "../hooks/useUsers";
+import { useCreateUser, useUpdateUser, useUser } from "../hooks";
 import { UserFormData } from "../types";
 import UserForm from "../components/UserForm";
 
