@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from schemas.user import User, UserCreate
+from services import users as users_service
 
 app = FastAPI(
     title="React Onboarding API",
@@ -28,6 +30,10 @@ async def health_check():
     """APIヘルスチェック"""
     return {"status": "healthy"}
 
+@app.get("/api/users", response_model=list[User])
+def list_users():
+    return users_service.get_all()
 
-# ここから各エンドポイントを追加していく
-# 例: /api/users エンドポイント
+@app.post("/api/users", response_model=User, status_code=201)
+def create_user(body: UserCreate):
+    return users_service.create(body)
