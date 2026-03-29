@@ -15,10 +15,7 @@ export const fetchUser = async (id: number): Promise<User> => {
 
 // ユーザー作成
 export const createUser = async (userDate: UserFormData): Promise<User[]> => {
-    const { data } = await apiClient.post<User[]>(`/users`, {
-        ...userDate,
-        createdAt: new Date().toISOString(),
-    });
+    const { data } = await apiClient.post<User[]>(`/users`, userDate);
     return data;
 }
 
